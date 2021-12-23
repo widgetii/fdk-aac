@@ -819,6 +819,7 @@ static INT aacEncoder_LimitBitrate(const HANDLE_TRANSPORTENC hTpEnc,
     bitRate = (initialBitrate == adjustedBitrate) ? adjustedBitrate : 0;
   }
 #endif
+#ifndef DISABLE_SAC_ENCODER
   /* Limit bit rate in respect to available MPS modes if active */
   if ((aot == AOT_ER_AAC_ELD) && (syntaxFlags & AC_LD_MPS) &&
       (channelMode == MODE_1)) {
@@ -826,6 +827,7 @@ static INT aacEncoder_LimitBitrate(const HANDLE_TRANSPORTENC hTpEnc,
         aot, MODE_212, samplingRate, (sbrActive) ? sbrDownSampleRate : 0,
         bitRate);
   }
+#endif
 
   return bitRate;
 }
@@ -1245,6 +1247,7 @@ static INT aacenc_SbrCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
   return 0;
 }
 
+#ifndef DISABLE_SAC_ENCODER
 INT aacenc_SscCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
                        const AUDIO_OBJECT_TYPE coreCodec,
                        const INT samplingRate, const INT frameSize,
@@ -1255,6 +1258,7 @@ INT aacenc_SscCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
 
   return (FDK_MpegsEnc_WriteSpatialSpecificConfig(hAacEncoder->hMpsEnc, hBs));
 }
+#endif
 
 static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
                                USER_PARAM *config) {
@@ -1368,8 +1372,10 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
   } /* sbr initialization */
 #endif
 
+#ifndef DISABLE_SAC_ENCODER
   if ((hAacEncoder->hMpsEnc != NULL) && (hAacConfig->syntaxFlags & AC_LD_MPS)) {
     int coreCoderDelay = DELAY_AACELD(hAacConfig->framelength);
+#endif
 
 #ifndef DISABLE_SBR_ENCODER
     if (isSbrActive(hAacConfig)) {
@@ -1378,6 +1384,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     }
 #endif
 
+#ifndef DISABLE_SAC_ENCODER
     if (MPS_ENCODER_OK !=
         FDK_MpegsEnc_Init(hAacEncoder->hMpsEnc, hAacConfig->audioObjectType,
                           config->userSamplerate, hAacConfig->bitRate,
@@ -1391,6 +1398,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
   }
   hAacEncoder->nDelay =
       fMax(FDK_MpegsEnc_GetDelay(hAacEncoder->hMpsEnc), hAacEncoder->nDelay);
+#endif
 
   /*
    * Initialize Transport - Module.
@@ -1461,11 +1469,13 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
 
   /* Get custom delay, i.e. the codec delay w/o the decoder's SBR- or MPS delay
    */
+#ifndef DISABLE_SBR_ENCODER
   if ((hAacEncoder->hMpsEnc != NULL) && (hAacConfig->syntaxFlags & AC_LD_MPS)) {
     hAacEncoder->nDelayCore =
         hAacEncoder->nDelay -
         fMax(0, FDK_MpegsEnc_GetDecDelay(hAacEncoder->hMpsEnc));
   } else
+#endif
 #ifndef DISABLE_SBR_ENCODER
     if (isSbrActive(hAacConfig) && hSbrEncoder != NULL) {
     hAacEncoder->nDelayCore =
@@ -1620,6 +1630,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
     }
   } /* (encoder_modis&ENC_MODE_FLAG_META) */
 
+#ifndef DISABLE_SAC_ENCODER
   /* Open MPEG Surround Encoder */
   if (hAacEncoder->encoder_modis & ENC_MODE_FLAG_SAC) {
     if (MPS_ENCODER_OK != FDK_MpegsEnc_Open(&hAacEncoder->hMpsEnc)) {
@@ -1627,6 +1638,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
       goto bail;
     }
   } /* (hAacEncoder->encoder_modis&ENC_MODE_FLAG_SAC) */
+#endif
 
   /* Open Transport Encoder */
   if (transportEnc_Open(&hAacEncoder->hTpEnc) != 0) {
@@ -1653,11 +1665,13 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
     goto bail;
   }
 #endif
+#ifndef DISABLE_SAC_ENCODER
   if (transportEnc_RegisterSscCallback(hAacEncoder->hTpEnc, aacenc_SscCallback,
                                        hAacEncoder) != 0) {
     err = AACENC_INIT_TP_ERROR;
     goto bail;
   }
+#endif
 
   /* Initialize encoder instance with default parameters. */
   aacEncDefaultConfig(&hAacEncoder->aacConfig, &hAacEncoder->extParam);
@@ -1718,9 +1732,11 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder) {
     if (hAacEncoder->hMetadataEnc) {
       FDK_MetadataEnc_Close(&hAacEncoder->hMetadataEnc);
     }
+#ifndef DISABLE_SAC_ENCODER
     if (hAacEncoder->hMpsEnc) {
       FDK_MpegsEnc_Close(&hAacEncoder->hMpsEnc);
     }
+#endif
 
     Free_AacEncoder(phAacEncoder);
   }
@@ -1925,6 +1941,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
   /*
    * Encode MPS data.
    */
+#ifndef DISABLE_SAC_ENCODER
   if ((hAacEncoder->hMpsEnc != NULL) &&
       (hAacEncoder->aacConfig.syntaxFlags & AC_LD_MPS)) {
     AACENC_EXT_PAYLOAD mpsExtensionPayload;
@@ -1945,6 +1962,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
       hAacEncoder->extPayload[nExtensions++] = mpsExtensionPayload;
     }
   }
+#endif
 
 #ifndef DISABLE_SBR_ENCODER
   if ((NULL != hAacEncoder->hEnvEnc) && (NULL != hAacEncoder->pSbrPayload) &&
@@ -2109,7 +2127,9 @@ AACENC_ERROR aacEncGetLibInfo(LIB_INFO *info) {
 #ifndef DISABLE_SBR_ENCODER
   sbrEncoder_GetLibInfo(info);
 #endif
+#ifndef DISABLE_SAC_ENCODER
   FDK_MpegsEnc_GetLibInfo(info);
+#endif
 
   /* search for next free tab */
   for (i = 0; i < FDK_MODULE_LAST; i++) {

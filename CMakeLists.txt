@@ -66,6 +66,7 @@ option(BUILD_PROGRAMS "Build aac-enc utility" OFF)
 option(FDK_AAC_INSTALL_CMAKE_CONFIG_MODULE "Install CMake package configuration file" ON)
 option(FDK_AAC_INSTALL_PKGCONFIG_MODULE "Install pkg-config .pc file" ON)
 option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
+option(DISABLE_SAC_ENCODER "Turn off MPEG Surround encoder support" OFF)
 
 # Checks
 
@@ -142,7 +143,14 @@ set(AACDEC_SRC
   libAACdec/src/usacdec_lpd.h
   libAACdec/src/usacdec_rom.h)
 
+if(NOT DISABLE_SAC_ENCODER)
+  set(MPS_SRC
+    libAACenc/src/mps_main.cpp
+    libAACenc/src/mps_main.h
+    )
+endif()
 set(AACENC_SRC
+  ${MPS_SRC}
   libAACenc/src/aacEnc_ram.cpp
   libAACenc/src/aacEnc_rom.cpp
   libAACenc/src/aacenc.cpp
@@ -163,7 +171,6 @@ set(AACENC_SRC
   libAACenc/src/line_pe.cpp
   libAACenc/src/metadata_compressor.cpp
   libAACenc/src/metadata_main.cpp
-  libAACenc/src/mps_main.cpp
   libAACenc/src/ms_stereo.cpp
   libAACenc/src/noisedet.cpp
   libAACenc/src/pnsparam.cpp
@@ -197,7 +204,6 @@ set(AACENC_SRC
   libAACenc/src/line_pe.h
   libAACenc/src/metadata_compressor.h
   libAACenc/src/metadata_main.h
-  libAACenc/src/mps_main.h
   libAACenc/src/ms_stereo.h
   libAACenc/src/noisedet.h
   libAACenc/src/pns_func.h
@@ -320,6 +326,7 @@ set(SACDEC_SRC
   libSACdec/src/sac_stp.h
   libSACdec/src/sac_tsd.h)
 
+if(NOT DISABLE_SAC_ENCODER)
 set(SACENC_SRC
   libSACenc/src/sacenc_bitstream.cpp
   libSACenc/src/sacenc_delay.cpp
@@ -347,6 +354,7 @@ set(SACENC_SRC
   libSACenc/src/sacenc_staticgain.h
   libSACenc/src/sacenc_tree.h
   libSACenc/src/sacenc_vectorfunctions.h)
+endif()
 
 set(SBRDEC_SRC
   libSBRdec/src/HFgen_preFlat.cpp
@@ -495,8 +503,11 @@ set_target_properties(fdk-aac PROPERTIES
   MACHO_COMPATIBILITY_VERSION 3.0.0
   MACHO_CURRENT_VERSION 3.2.0)
 
-if (DISABLE_SBR_ENCODER)
+if(DISABLE_SBR_ENCODER)
   target_compile_definitions(fdk-aac PRIVATE DISABLE_SBR_ENCODER)
+endif()
+if(DISABLE_SAC_ENCODER)
+  target_compile_definitions(fdk-aac PRIVATE DISABLE_SAC_ENCODER)
 endif()
 
 ### Some compiler options from Makefile.am
