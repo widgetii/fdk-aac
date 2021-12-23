@@ -1231,6 +1231,7 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
   return err;
 }
 
+#ifndef DISABLE_SBR_ENCODER
 static INT aacenc_SbrCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
                               const INT sampleRateIn, const INT sampleRateOut,
                               const INT samplesPerFrame,
@@ -1246,6 +1247,7 @@ static INT aacenc_SbrCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
 
   return 0;
 }
+#endif
 
 #ifndef DISABLE_SAC_ENCODER
 INT aacenc_SscCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
@@ -1455,6 +1457,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     }
 #endif
 
+#ifndef DISABLE_META_ENCODER
     if (FDK_MetadataEnc_Init(hAacEncoder->hMetadataEnc,
                              ((InitFlags & AACENC_INIT_STATES) ? 1 : 0),
                              config->userMetaDataMode, inputDataDelay,
@@ -1465,6 +1468,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     }
 
     hAacEncoder->nDelay += FDK_MetadataEnc_GetDelay(hAacEncoder->hMetadataEnc);
+#endif
   }
 
   /* Get custom delay, i.e. the codec delay w/o the decoder's SBR- or MPS delay
@@ -1621,6 +1625,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
     goto bail;
   }
 
+#ifndef DISABLE_META_ENCODER
   /* Open Meta Data Encoder */
   if (hAacEncoder->encoder_modis & ENC_MODE_FLAG_META) {
     if (FDK_MetadataEnc_Open(&hAacEncoder->hMetadataEnc,
@@ -1629,6 +1634,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
       goto bail;
     }
   } /* (encoder_modis&ENC_MODE_FLAG_META) */
+#endif
 
 #ifndef DISABLE_SAC_ENCODER
   /* Open MPEG Surround Encoder */
@@ -1729,9 +1735,11 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder) {
 
     transportEnc_Close(&hAacEncoder->hTpEnc);
 
+#ifndef DISABLE_META_ENCODER
     if (hAacEncoder->hMetadataEnc) {
       FDK_MetadataEnc_Close(&hAacEncoder->hMetadataEnc);
     }
+#endif
 #ifndef DISABLE_SAC_ENCODER
     if (hAacEncoder->hMpsEnc) {
       FDK_MpegsEnc_Close(&hAacEncoder->hMpsEnc);
@@ -1899,6 +1907,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
   /*
    * Calculate Meta Data info.
    */
+#ifndef DISABLE_META_ENCODER
   if ((hAacEncoder->hMetadataEnc != NULL) &&
       (hAacEncoder->metaDataAllowed != 0)) {
     const AACENC_MetaData *pMetaData = NULL;
@@ -1937,6 +1946,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
       }
     }
   }
+#endif
 
   /*
    * Encode MPS data.

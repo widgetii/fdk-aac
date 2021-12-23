@@ -67,6 +67,7 @@ option(FDK_AAC_INSTALL_CMAKE_CONFIG_MODULE "Install CMake package configuration 
 option(FDK_AAC_INSTALL_PKGCONFIG_MODULE "Install pkg-config .pc file" ON)
 option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
 option(DISABLE_SAC_ENCODER "Turn off MPEG Surround encoder support" OFF)
+option(DISABLE_META_ENCODER "Turn off metadata encoder support" OFF)
 
 # Checks
 
@@ -149,7 +150,16 @@ if(NOT DISABLE_SAC_ENCODER)
     libAACenc/src/mps_main.h
     )
 endif()
+if(NOT DISABLE_META_ENCODER)
+  set(META_SRC
+    libAACenc/src/metadata_main.cpp
+    libAACenc/src/metadata_main.h
+    libAACenc/src/metadata_compressor.cpp
+    libAACenc/src/metadata_compressor.h
+    )
+endif()
 set(AACENC_SRC
+  ${META_SRC}
   ${MPS_SRC}
   libAACenc/src/aacEnc_ram.cpp
   libAACenc/src/aacEnc_rom.cpp
@@ -169,8 +179,6 @@ set(AACENC_SRC
   libAACenc/src/grp_data.cpp
   libAACenc/src/intensity.cpp
   libAACenc/src/line_pe.cpp
-  libAACenc/src/metadata_compressor.cpp
-  libAACenc/src/metadata_main.cpp
   libAACenc/src/ms_stereo.cpp
   libAACenc/src/noisedet.cpp
   libAACenc/src/pnsparam.cpp
@@ -202,8 +210,6 @@ set(AACENC_SRC
   libAACenc/src/intensity.h
   libAACenc/src/interface.h
   libAACenc/src/line_pe.h
-  libAACenc/src/metadata_compressor.h
-  libAACenc/src/metadata_main.h
   libAACenc/src/ms_stereo.h
   libAACenc/src/noisedet.h
   libAACenc/src/pns_func.h
@@ -508,6 +514,9 @@ if(DISABLE_SBR_ENCODER)
 endif()
 if(DISABLE_SAC_ENCODER)
   target_compile_definitions(fdk-aac PRIVATE DISABLE_SAC_ENCODER)
+endif()
+if(DISABLE_META_ENCODER)
+  target_compile_definitions(fdk-aac PRIVATE DISABLE_META_ENCODER)
 endif()
 
 ### Some compiler options from Makefile.am
