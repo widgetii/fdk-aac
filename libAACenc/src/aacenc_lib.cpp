@@ -846,7 +846,9 @@ static INT FDKaacEnc_GetCBRBitrate(const HANDLE_AACENC_CONFIG hAacConfig,
 
   if (isPsActive(hAacConfig->audioObjectType)) {
     bitrate = 1 * bitrate; /* 0.5 bit per sample */
-  } else if (isSbrActive(hAacConfig)) {
+  }
+#ifndef DISABLE_SBR_ENCODER
+   else if (isSbrActive(hAacConfig)) {
     if ((userSbrRatio == 2) ||
         ((userSbrRatio == 0) &&
          (hAacConfig->audioObjectType != AOT_ER_AAC_ELD))) {
@@ -857,7 +859,9 @@ static INT FDKaacEnc_GetCBRBitrate(const HANDLE_AACENC_CONFIG hAacConfig,
          (hAacConfig->audioObjectType == AOT_ER_AAC_ELD))) {
       bitrate = (bitrate + (bitrate >> 3)); /* 1.125 bits per sample */
     }
-  } else {
+  }
+#endif
+  else {
     bitrate = bitrate + (bitrate >> 1); /* 1.5 bits per sample */
   }
 
@@ -1405,6 +1409,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
   /*
    * Initialize Transport - Module.
    */
+#ifndef DISABLE_TRANSPORT_ENCODER
   if ((InitFlags & AACENC_INIT_TRANSPORT)) {
     UINT flags = 0;
 
@@ -1430,6 +1435,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     }
 
   } /* transport initialization */
+#endif
 
   /*
    * Initialize AAC - Core.
@@ -1646,6 +1652,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
   } /* (hAacEncoder->encoder_modis&ENC_MODE_FLAG_SAC) */
 #endif
 
+#ifndef DISABLE_TRANSPORT_ENCODER
   /* Open Transport Encoder */
   if (transportEnc_Open(&hAacEncoder->hTpEnc) != 0) {
     err = AACENC_MEMORY_ERROR;
@@ -1664,6 +1671,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
 
     C_ALLOC_SCRATCH_END(_pLibInfo, LIB_INFO, FDK_MODULE_LAST)
   }
+#endif
 #ifndef DISABLE_SBR_ENCODER
   if (transportEnc_RegisterSbrCallback(hAacEncoder->hTpEnc, aacenc_SbrCallback,
                                        hAacEncoder) != 0) {
@@ -1733,7 +1741,9 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder) {
       FDKaacEnc_Close(&hAacEncoder->hAacEnc);
     }
 
+#ifndef DISABLE_TRANSPORT_ENCODER
     transportEnc_Close(&hAacEncoder->hTpEnc);
+#endif
 
 #ifndef DISABLE_META_ENCODER
     if (hAacEncoder->hMetadataEnc) {
@@ -2133,7 +2143,9 @@ AACENC_ERROR aacEncGetLibInfo(LIB_INFO *info) {
   }
 
   FDK_toolsGetLibInfo(info);
+#ifndef DISABLE_TRANSPORT_ENCODER
   transportEnc_GetLibInfo(info);
+#endif
 #ifndef DISABLE_SBR_ENCODER
   sbrEncoder_GetLibInfo(info);
 #endif

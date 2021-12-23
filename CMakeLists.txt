@@ -68,6 +68,7 @@ option(FDK_AAC_INSTALL_PKGCONFIG_MODULE "Install pkg-config .pc file" ON)
 option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
 option(DISABLE_SAC_ENCODER "Turn off MPEG Surround encoder support" OFF)
 option(DISABLE_META_ENCODER "Turn off metadata encoder support" OFF)
+option(DISABLE_TRANSPORT_ENCODER "Turn off transport encoder support" OFF)
 
 # Checks
 
@@ -287,6 +288,7 @@ set(MPEGTPDEC_SRC
   libMpegTPDec/src/tpdec_drm.h
   libMpegTPDec/src/tpdec_latm.h)
 
+if(NOT DISABLE_TRANSPORT_ENCODER)
 set(MPEGTPENC_SRC
   libMpegTPEnc/src/tpenc_adif.cpp
   libMpegTPEnc/src/tpenc_adts.cpp
@@ -298,6 +300,7 @@ set(MPEGTPENC_SRC
   libMpegTPEnc/src/tpenc_adts.h
   libMpegTPEnc/src/tpenc_asc.h
   libMpegTPEnc/src/tpenc_latm.h)
+endif()
 
 set(PCMUTILS_SRC
   libPCMutils/src/limiter.cpp
@@ -517,6 +520,9 @@ if(DISABLE_SAC_ENCODER)
 endif()
 if(DISABLE_META_ENCODER)
   target_compile_definitions(fdk-aac PRIVATE DISABLE_META_ENCODER)
+endif()
+if(DISABLE_TRANSPORT_ENCODER)
+  target_compile_definitions(fdk-aac PRIVATE DISABLE_TRANSPORT_ENCODER)
 endif()
 
 ### Some compiler options from Makefile.am
