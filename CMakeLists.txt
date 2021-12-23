@@ -65,6 +65,7 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(BUILD_PROGRAMS "Build aac-enc utility" OFF)
 option(FDK_AAC_INSTALL_CMAKE_CONFIG_MODULE "Install CMake package configuration file" ON)
 option(FDK_AAC_INSTALL_PKGCONFIG_MODULE "Install pkg-config .pc file" ON)
+option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
 
 # Checks
 
@@ -386,6 +387,7 @@ set(SBRDEC_SRC
   libSBRdec/src/sbrdec_freq_sca.h
   libSBRdec/src/transcendent.h)
 
+if (NOT DISABLE_SBR_ENCODER)
 set(SBRENC_SRC
   libSBRenc/src/bit_sbr.cpp
   libSBRenc/src/code_env.cpp
@@ -428,6 +430,7 @@ set(SBRENC_SRC
   libSBRenc/src/sbrenc_rom.h
   libSBRenc/src/ton_corr.h
   libSBRenc/src/tran_det.h)
+endif()
 
 set(SYS_SRC
   libSYS/src/genericStds.cpp
@@ -491,6 +494,10 @@ set_target_properties(fdk-aac PROPERTIES
   SOVERSION 2
   MACHO_COMPATIBILITY_VERSION 3.0.0
   MACHO_CURRENT_VERSION 3.2.0)
+
+if (DISABLE_SBR_ENCODER)
+  target_compile_definitions(fdk-aac PRIVATE DISABLE_SBR_ENCODER)
+endif()
 
 ### Some compiler options from Makefile.am
 if(MSVC)

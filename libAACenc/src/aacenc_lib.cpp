@@ -737,11 +737,14 @@ static INT aacEncoder_LimitBitrate(const HANDLE_TRANSPORTENC hTpEnc,
 
   FDKaacEnc_InitChannelMapping(channelMode, CH_ORDER_MPEG, &cm);
 
+#ifndef DISABLE_SBR_ENCODER
   if (sbrActive) {
     coreSamplingRate =
         samplingRate >>
         (sbrEncoder_IsSingleRatePossible(aot) ? (sbrDownSampleRate - 1) : 1);
-  } else {
+  } else
+#endif
+  {
     coreSamplingRate = samplingRate;
   }
 
@@ -750,6 +753,7 @@ static INT aacEncoder_LimitBitrate(const HANDLE_TRANSPORTENC hTpEnc,
                                    nChannels, cm.nChannelsEff, bitRate, -1,
                                    NULL, AACENC_BR_MODE_INVALID, nSubFrames);
 
+#ifndef DISABLE_SBR_ENCODER
   /* Limit bit rate in respect to available SBR modes if active */
   if (sbrActive) {
     int numIterations = 0;
@@ -814,7 +818,7 @@ static INT aacEncoder_LimitBitrate(const HANDLE_TRANSPORTENC hTpEnc,
     /* Unequal bitrates mean that no reasonable bitrate configuration found. */
     bitRate = (initialBitrate == adjustedBitrate) ? adjustedBitrate : 0;
   }
-
+#endif
   /* Limit bit rate in respect to available MPS modes if active */
   if ((aot == AOT_ER_AAC_ELD) && (syntaxFlags & AC_LD_MPS) &&
       (channelMode == MODE_1)) {
@@ -992,6 +996,7 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
       break;
   }
 
+#ifndef DISABLE_SBR_ENCODER
   /* Initialize SBR parameters */
   if ((config->userSbrRatio == 0) && (isSbrActive(hAacConfig))) {
     /* Automatic SBR ratio configuration
@@ -1010,6 +1015,7 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
     /* SBR ratio has been set by the user, so use it. */
     hAacConfig->sbrRatio = isSbrActive(hAacConfig) ? config->userSbrRatio : 0;
   }
+#endif
 
   /* Set default bitrate */
   hAacConfig->bitRate = config->userBitrate;
@@ -1300,6 +1306,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     hAacConfig->ancDataBitRate = 0;
   }
 
+#ifndef DISABLE_SBR_ENCODER
   if ((NULL != hAacEncoder->hEnvEnc) && isSbrActive(hAacConfig) &&
       ((InitFlags & AACENC_INIT_CONFIG) || (InitFlags & AACENC_INIT_STATES))) {
     INT sbrError;
@@ -1359,14 +1366,17 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     hAacConfig->ancDataBitRate = sbrEncoder_GetEstimateBitrate(*hSbrEncoder);
 
   } /* sbr initialization */
+#endif
 
   if ((hAacEncoder->hMpsEnc != NULL) && (hAacConfig->syntaxFlags & AC_LD_MPS)) {
     int coreCoderDelay = DELAY_AACELD(hAacConfig->framelength);
 
+#ifndef DISABLE_SBR_ENCODER
     if (isSbrActive(hAacConfig)) {
       coreCoderDelay = hAacConfig->sbrRatio * coreCoderDelay +
                        sbrEncoder_GetInputDataDelay(*hSbrEncoder);
     }
+#endif
 
     if (MPS_ENCODER_OK !=
         FDK_MpegsEnc_Init(hAacEncoder->hMpsEnc, hAacConfig->audioObjectType,
@@ -1430,10 +1440,12 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
       ((InitFlags & AACENC_INIT_CONFIG) || (InitFlags & AACENC_INIT_STATES))) {
     INT inputDataDelay = DELAY_AAC(hAacConfig->framelength);
 
+#ifndef DISABLE_SBR_ENCODER
     if (isSbrActive(hAacConfig) && hSbrEncoder != NULL) {
       inputDataDelay = hAacConfig->sbrRatio * inputDataDelay +
                        sbrEncoder_GetInputDataDelay(*hSbrEncoder);
     }
+#endif
 
     if (FDK_MetadataEnc_Init(hAacEncoder->hMetadataEnc,
                              ((InitFlags & AACENC_INIT_STATES) ? 1 : 0),
@@ -1453,11 +1465,15 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     hAacEncoder->nDelayCore =
         hAacEncoder->nDelay -
         fMax(0, FDK_MpegsEnc_GetDecDelay(hAacEncoder->hMpsEnc));
-  } else if (isSbrActive(hAacConfig) && hSbrEncoder != NULL) {
+  } else
+#ifndef DISABLE_SBR_ENCODER
+    if (isSbrActive(hAacConfig) && hSbrEncoder != NULL) {
     hAacEncoder->nDelayCore =
         hAacEncoder->nDelay -
         fMax(0, sbrEncoder_GetSbrDecDelay(hAacEncoder->hEnvEnc));
-  } else {
+  } else
+#endif
+  {
     hAacEncoder->nDelayCore = hAacEncoder->nDelay;
   }
 
@@ -1558,6 +1574,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
     goto bail;
   }
 
+#ifndef DISABLE_SBR_ENCODER
   /* Open SBR Encoder */
   if (hAacEncoder->encoder_modis & ENC_MODE_FLAG_SBR) {
     if (sbrEncoder_Open(
@@ -1574,6 +1591,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
       goto bail;
     }
   } /* (encoder_modis&ENC_MODE_FLAG_SBR) */
+#endif
 
   /* Open Aac Encoder */
   if (FDKaacEnc_Open(&hAacEncoder->hAacEnc, hAacEncoder->nMaxAacElements,
@@ -1628,11 +1646,13 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
 
     C_ALLOC_SCRATCH_END(_pLibInfo, LIB_INFO, FDK_MODULE_LAST)
   }
+#ifndef DISABLE_SBR_ENCODER
   if (transportEnc_RegisterSbrCallback(hAacEncoder->hTpEnc, aacenc_SbrCallback,
                                        hAacEncoder) != 0) {
     err = AACENC_INIT_TP_ERROR;
     goto bail;
   }
+#endif
   if (transportEnc_RegisterSscCallback(hAacEncoder->hTpEnc, aacenc_SscCallback,
                                        hAacEncoder) != 0) {
     err = AACENC_INIT_TP_ERROR;
@@ -1680,6 +1700,7 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder) {
       hAacEncoder->outBuffer = NULL;
     }
 
+#ifndef DISABLE_SBR_ENCODER
     if (hAacEncoder->hEnvEnc) {
       sbrEncoder_Close(&hAacEncoder->hEnvEnc);
     }
@@ -1687,6 +1708,7 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder) {
       FDKfree(hAacEncoder->pSbrPayload);
       hAacEncoder->pSbrPayload = NULL;
     }
+#endif
     if (hAacEncoder->hAacEnc) {
       FDKaacEnc_Close(&hAacEncoder->hAacEnc);
     }
@@ -1924,6 +1946,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
     }
   }
 
+#ifndef DISABLE_SBR_ENCODER
   if ((NULL != hAacEncoder->hEnvEnc) && (NULL != hAacEncoder->pSbrPayload) &&
       isSbrActive(&hAacEncoder->aacConfig)) {
     INT nPayload = 0;
@@ -1966,6 +1989,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
       nPayload++;
     }
   } /* sbrEnabled */
+#endif
 
   if ((inargs->numAncBytes > 0) &&
       (getBufDescIdx(inBufDesc, IN_ANCILLRY_DATA) != -1)) {
@@ -1998,6 +2022,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
   /* samples exhausted */
   hAacEncoder->nSamplesRead -= hAacEncoder->nSamplesToRead;
 
+#ifndef DISABLE_SBR_ENCODER
   /*
    * Delay balancing buffer handling
    */
@@ -2005,6 +2030,7 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
     sbrEncoder_UpdateBuffers(hAacEncoder->hEnvEnc, hAacEncoder->inputBuffer,
                              hAacEncoder->inputBufferSizePerChannel);
   }
+#endif
 
   /*
    * Make bitstream public
@@ -2080,7 +2106,9 @@ AACENC_ERROR aacEncGetLibInfo(LIB_INFO *info) {
 
   FDK_toolsGetLibInfo(info);
   transportEnc_GetLibInfo(info);
+#ifndef DISABLE_SBR_ENCODER
   sbrEncoder_GetLibInfo(info);
+#endif
   FDK_MpegsEnc_GetLibInfo(info);
 
   /* search for next free tab */
