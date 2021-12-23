@@ -69,6 +69,7 @@ option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
 option(DISABLE_SAC_ENCODER "Turn off MPEG Surround encoder support" OFF)
 option(DISABLE_META_ENCODER "Turn off metadata encoder support" OFF)
 option(DISABLE_TRANSPORT_ENCODER "Turn off transport encoder support" OFF)
+option(DISABLE_DECODERS "Turn off all decoders" OFF)
 
 # Checks
 
@@ -82,6 +83,7 @@ endif()
 
 ## Sources
 
+if(NOT DISABLE_DECODERS)
 set(AACDEC_SRC
   libAACdec/src/FDK_delay.cpp
   libAACdec/src/aac_ram.cpp
@@ -144,6 +146,7 @@ set(AACDEC_SRC
   libAACdec/src/usacdec_lpc.h
   libAACdec/src/usacdec_lpd.h
   libAACdec/src/usacdec_rom.h)
+endif()
 
 if(NOT DISABLE_SAC_ENCODER)
   set(MPS_SRC
@@ -229,9 +232,12 @@ set(AACENC_SRC
   libAACenc/src/tonality.h
   libAACenc/src/transform.h)
 
+if(NOT DISABLE_DECODERS)
 set(ARITHCODING_SRC
   libArithCoding/src/ac_arith_coder.cpp)
+endif()
 
+if(NOT DISABLE_DECODERS)
 set(DRCDEC_SRC
   libDRCdec/src/FDK_drcDecLib.cpp
   libDRCdec/src/drcDec_gainDecoder.cpp
@@ -252,6 +258,7 @@ set(DRCDEC_SRC
   libDRCdec/src/drcGainDec_init.h
   libDRCdec/src/drcGainDec_preprocess.h
   libDRCdec/src/drcGainDec_process.h)
+endif()
 
 set(FDK_SRC
   libFDK/src/FDK_bitbuffer.cpp
@@ -275,6 +282,7 @@ set(FDK_SRC
   libFDK/src/qmf.cpp
   libFDK/src/scale.cpp)
 
+if(NOT DISABLE_DECODERS)
 set(MPEGTPDEC_SRC
   libMpegTPDec/src/tpdec_adif.cpp
   libMpegTPDec/src/tpdec_adts.cpp
@@ -287,6 +295,7 @@ set(MPEGTPDEC_SRC
   libMpegTPDec/src/tpdec_adts.h
   libMpegTPDec/src/tpdec_drm.h
   libMpegTPDec/src/tpdec_latm.h)
+endif()
 
 if(NOT DISABLE_TRANSPORT_ENCODER)
 set(MPEGTPENC_SRC
@@ -308,6 +317,7 @@ set(PCMUTILS_SRC
   libPCMutils/src/pcmdmx_lib.cpp
   libPCMutils/src/version.h)
 
+if(NOT DISABLE_DECODERS)
 set(SACDEC_SRC
   libSACdec/src/sac_bitdec.cpp
   libSACdec/src/sac_calcM1andM2.cpp
@@ -334,6 +344,7 @@ set(SACDEC_SRC
   libSACdec/src/sac_smoothing.h
   libSACdec/src/sac_stp.h
   libSACdec/src/sac_tsd.h)
+endif()
 
 if(NOT DISABLE_SAC_ENCODER)
 set(SACENC_SRC
@@ -365,6 +376,7 @@ set(SACENC_SRC
   libSACenc/src/sacenc_vectorfunctions.h)
 endif()
 
+if(NOT DISABLE_DECODERS)
 set(SBRDEC_SRC
   libSBRdec/src/HFgen_preFlat.cpp
   libSBRdec/src/env_calc.cpp
@@ -403,6 +415,7 @@ set(SBRDEC_SRC
   libSBRdec/src/sbrdec_drc.h
   libSBRdec/src/sbrdec_freq_sca.h
   libSBRdec/src/transcendent.h)
+endif()
 
 if (NOT DISABLE_SBR_ENCODER)
 set(SBRENC_SRC
