@@ -69,7 +69,7 @@ option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
 option(DISABLE_SAC_ENCODER "Turn off MPEG Surround encoder support" OFF)
 option(DISABLE_META_ENCODER "Turn off metadata encoder support" OFF)
 option(DISABLE_TRANSPORT_ENCODER "Turn off transport encoder support" OFF)
-option(DISABLE_PNS "Turn off perceptual noise substitution" OFF)
+option(DISABLE_NOISE_SHAPING "Turn off noise shaping" OFF)
 option(DISABLE_STEREO "Turn off stereo processing" OFF)
 option(DISABLE_DECODERS "Turn off all decoders" OFF)
 
@@ -164,7 +164,7 @@ if(NOT DISABLE_META_ENCODER)
     libAACenc/src/metadata_compressor.h
     )
 endif()
-if(NOT DISABLE_PNS)
+if(NOT DISABLE_NOISE_SHAPING)
   set(PNSENC_SRC
     libAACenc/src/aacenc_pns.cpp
     libAACenc/src/aacenc_pns.h
@@ -547,8 +547,8 @@ endif()
 if(DISABLE_TRANSPORT_ENCODER)
   target_compile_definitions(fdk-aac PRIVATE DISABLE_TRANSPORT_ENCODER)
 endif()
-if(DISABLE_PNS)
-  target_compile_definitions(fdk-aac PRIVATE DISABLE_PNS)
+if(DISABLE_NOISE_SHAPING)
+  target_compile_definitions(fdk-aac PRIVATE DISABLE_NOISE_SHAPING)
 endif()
 if(DISABLE_STEREO)
   target_compile_definitions(fdk-aac PRIVATE DISABLE_STEREO)

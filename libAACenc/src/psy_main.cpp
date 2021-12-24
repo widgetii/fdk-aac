@@ -378,7 +378,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(
     }
   }
 
-#ifndef DISABLE_PNS
+#ifndef DISABLE_NOISE_SHAPING
   ErrorStatus = FDKaacEnc_InitPnsConfiguration(
       &hPsy->psyConf[0].pnsConf, bitRate / channelsEff, sampleRate, usePns,
       hPsy->psyConf[0].sfbCnt, hPsy->psyConf[0].sfbOffset,
@@ -1143,7 +1143,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
     INT win = (isShortWindow[ch] ? 1 : 0);
     if (!psyStatic[ch]->isLFE) {
       /* PNS Decision */
-#ifndef DISABLE_PNS
+#ifndef DISABLE_NOISE_SHAPING
       FDKaacEnc_PnsDetect(
           &(psyConf[0].pnsConf), pnsData[ch],
           psyStatic[ch]->blockSwitchingControl.lastWindowSequence,
@@ -1176,7 +1176,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           fixMax(maxSfbPerGroup[0], maxSfbPerGroup[1]);
     if (psyStatic[0]->blockSwitchingControl.lastWindowSequence !=
         SHORT_WINDOW) {
-#ifndef DISABLE_PNS
+#ifndef DISABLE_NOISE_SHAPING
       /* PNS preprocessing depending on ms processing: PNS not in Short Window!
        */
       FDKaacEnc_PreProcessPnsChannelPair(
@@ -1205,7 +1205,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           psyConf[0].allowMS, psyData[0]->sfbActive, psyData[0]->sfbActive,
           maxSfbPerGroup[0], psyOutChannel[0]->sfbOffsets);
 
-#ifndef DISABLE_PNS
+#ifndef DISABLE_NOISE_SHAPING
       /* PNS postprocessing */
       FDKaacEnc_PostProcessPnsChannelPair(
           psyData[0]->sfbActive, &(psyConf[0].pnsConf), pnsData[0], pnsData[1],
@@ -1241,7 +1241,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
   } /* (channels == 2) */
 #endif
 
-#ifndef DISABLE_PNS
+#ifndef DISABLE_NOISE_SHAPING
   /*
     PNS Coding
   */
