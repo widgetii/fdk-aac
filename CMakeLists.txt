@@ -168,6 +168,10 @@ if(NOT DISABLE_NOISE_SHAPING)
   set(PNSENC_SRC
     libAACenc/src/aacenc_pns.cpp
     libAACenc/src/aacenc_pns.h
+    libAACenc/src/aacenc_tns.cpp
+    libAACenc/src/aacenc_tns.h
+    libAACenc/src/pnsparam.cpp
+    libAACenc/src/pnsparam.h
     )
 if(NOT DISABLE_STEREO)
   set(STEREO_SRC
@@ -185,7 +189,6 @@ set(AACENC_SRC
   libAACenc/src/aacEnc_rom.cpp
   libAACenc/src/aacenc.cpp
   libAACenc/src/aacenc_lib.cpp
-  libAACenc/src/aacenc_tns.cpp
   libAACenc/src/adj_thr.cpp
   libAACenc/src/band_nrg.cpp
   libAACenc/src/bandwidth.cpp
@@ -199,7 +202,6 @@ set(AACENC_SRC
   libAACenc/src/intensity.cpp
   libAACenc/src/line_pe.cpp
   libAACenc/src/noisedet.cpp
-  libAACenc/src/pnsparam.cpp
   libAACenc/src/pre_echo_control.cpp
   libAACenc/src/psy_configuration.cpp
   libAACenc/src/psy_main.cpp
@@ -212,7 +214,6 @@ set(AACENC_SRC
   libAACenc/src/aacenc.h
   libAACenc/src/aacEnc_ram.h
   libAACenc/src/aacEnc_rom.h
-  libAACenc/src/aacenc_tns.h
   libAACenc/src/adj_thr.h
   libAACenc/src/adj_thr_data.h
   libAACenc/src/band_nrg.h
@@ -229,7 +230,6 @@ set(AACENC_SRC
   libAACenc/src/line_pe.h
   libAACenc/src/noisedet.h
   libAACenc/src/pns_func.h
-  libAACenc/src/pnsparam.h
   libAACenc/src/pre_echo_control.h
   libAACenc/src/psy_configuration.h
   libAACenc/src/psy_const.h

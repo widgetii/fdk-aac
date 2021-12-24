@@ -338,6 +338,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(
       hPsy->granuleLength, useIS, useMS, &(hPsy->psyConf[0]), filterBank);
   if (ErrorStatus != AAC_ENC_OK) return ErrorStatus;
 
+#ifndef DISABLE_NOISE_SHAPING
   ErrorStatus = FDKaacEnc_InitTnsConfiguration(
       (bitRate * tnsChannels) / channelsEff, sampleRate, tnsChannels,
       LONG_WINDOW, hPsy->granuleLength, isLowDelay(audioObjectType),
@@ -345,6 +346,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(
       &hPsy->psyConf[0], (INT)(tnsMask & 2), (INT)(tnsMask & 8));
 
   if (ErrorStatus != AAC_ENC_OK) return ErrorStatus;
+#endif
 
   if (granuleLength > 512) {
     ErrorStatus = FDKaacEnc_InitPsyConfiguration(
@@ -353,6 +355,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(
 
     if (ErrorStatus != AAC_ENC_OK) return ErrorStatus;
 
+#ifndef DISABLE_NOISE_SHAPING
     ErrorStatus = FDKaacEnc_InitTnsConfiguration(
         (bitRate * tnsChannels) / channelsEff, sampleRate, tnsChannels,
         SHORT_WINDOW, hPsy->granuleLength, isLowDelay(audioObjectType),
@@ -360,6 +363,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(
         &hPsy->psyConf[1], (INT)(tnsMask & 1), (INT)(tnsMask & 4));
 
     if (ErrorStatus != AAC_ENC_OK) return ErrorStatus;
+#endif
   }
 
   for (i = 0; i < cm->nElements; i++) {
@@ -765,6 +769,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
       }
     } /* ch */
 
+#ifndef DISABLE_NOISE_SHAPING
     if (hPsyConfLong->tnsConf.tnsActive || hPsyConfShort->tnsConf.tnsActive) {
       INT tnsActive[TRANS_FAC] = {0};
       INT nrgScaling[2] = {0, 0};
@@ -914,7 +919,9 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
       } /* end channel loop */
 
     } /* TNS active */
-    else {
+    else
+#endif
+    {
       /* In case of disable TNS, reset its dynamic data. Some of its elements is
        * required in PNS detection below. */
       FDKmemclear(psyDynamic->tnsData, sizeof(psyDynamic->tnsData));
