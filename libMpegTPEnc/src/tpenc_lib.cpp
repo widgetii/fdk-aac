@@ -201,11 +201,14 @@ static INT getPceRepetitionRate(const CHANNEL_MODE channelMode,
     switch (getChannelConfig(channelMode, channelConfigZero)) {
       case 0:
         switch (transportFmt) {
+#ifndef DISABLE_TRANSPORT_ENCODER
           case TT_MP4_ADTS:
           case TT_MP4_LATM_MCP0:
+#endif
           case TT_MP4_RAW:
             pceFrameCounter = headerPeriod;
             break;
+#ifndef DISABLE_TRANSPORT_ENCODER
           case TT_MP4_ADIF: /* ADIF header comprises PCE */
             if ((channelMode == MODE_1_2_2) || (channelMode == MODE_1_2_2_1)) {
               pceFrameCounter = headerPeriod; /* repeating pce only meaningful
@@ -215,6 +218,7 @@ static INT getPceRepetitionRate(const CHANNEL_MODE channelMode,
             FDK_FALLTHROUGH;
           case TT_MP4_LOAS:      /* PCE in ASC if chChonfig==0 */
           case TT_MP4_LATM_MCP1: /* PCE in ASC if chChonfig==0 */
+#endif
           default:
             pceFrameCounter = -1; /* no PCE in raw_data_block */
         }
@@ -266,6 +270,7 @@ TRANSPORTENC_ERROR transportEnc_Init(HANDLE_TRANSPORTENC hTpEnc,
                    0, BS_WRITER);
 
   switch (transportFmt) {
+#ifndef DISABLE_TRANSPORT_ENCODER
     case TT_MP4_ADIF:
       /* Sanity checks */
       if ((hTpEnc->config.aot != AOT_AAC_LC) ||
@@ -307,6 +312,7 @@ TRANSPORTENC_ERROR transportEnc_Init(HANDLE_TRANSPORTENC hTpEnc,
         return error;
       }
     } break;
+#endif
 
     case TT_MP4_RAW:
       hTpEnc->writer.raw.curSubFrame = 0;
@@ -328,6 +334,7 @@ TRANSPORTENC_ERROR transportEnc_Init(HANDLE_TRANSPORTENC hTpEnc,
 TRANSPORTENC_ERROR transportEnc_AddOtherDataBits(HANDLE_TRANSPORTENC hTpEnc,
                                                  const int nBits) {
   TRANSPORTENC_ERROR tpErr = TRANSPORTENC_OK;
+#ifndef DISABLE_TRANSPORT_ENCODER
 
   switch (hTpEnc->transportFmt) {
     case TT_MP4_LATM_MCP0:
@@ -341,7 +348,7 @@ TRANSPORTENC_ERROR transportEnc_AddOtherDataBits(HANDLE_TRANSPORTENC hTpEnc,
     default:
       tpErr = TRANSPORTENC_UNKOWN_ERROR;
   }
-
+#endif
   return tpErr;
 }
 
@@ -396,6 +403,7 @@ TRANSPORTENC_ERROR transportEnc_WriteAccessUnit(HANDLE_TRANSPORTENC hTp,
   }
 
   switch (hTp->transportFmt) {
+#ifndef DISABLE_TRANSPORT_ENCODER
     case TT_MP4_ADIF:
       FDKinitBitStream(&hTp->bitStream, hTp->bsBuffer, hTp->bsBufferSize, 0,
                        BS_WRITER);
@@ -419,6 +427,7 @@ TRANSPORTENC_ERROR transportEnc_WriteAccessUnit(HANDLE_TRANSPORTENC hTp,
       transportEnc_LatmWrite(&hTp->writer.latm, hBs, frameUsedBits,
                              bufferFullness, &hTp->callbacks);
       break;
+#endif
     case TT_MP4_RAW:
       if (hTp->writer.raw.curSubFrame >= hTp->writer.raw.nSubFrames) {
         hTp->writer.raw.curSubFrame = 0;
@@ -441,10 +450,12 @@ TRANSPORTENC_ERROR transportEnc_WriteAccessUnit(HANDLE_TRANSPORTENC hTp,
     /* Write PCE element ID bits */
     FDKwriteBits(&hTp->bitStream, ID_PCE, 3);
 
+#ifndef DISABLE_TRANSPORT_ENCODER
     if ((hTp->transportFmt == TT_MP4_ADTS) &&
         !hTp->writer.adts.protection_absent) {
       crcIndex = adtsWrite_CrcStartReg(&hTp->writer.adts, &hTp->bitStream, 0);
     }
+#endif
 
     /* Write PCE as first raw_data_block element */
     transportEnc_writePCE(
@@ -452,11 +463,13 @@ TRANSPORTENC_ERROR transportEnc_WriteAccessUnit(HANDLE_TRANSPORTENC hTp,
         1, hTp->config.matrixMixdownA,
         (hTp->config.flags & CC_PSEUDO_SURROUND) ? 1 : 0, alignAnchor);
 
+#ifndef DISABLE_TRANSPORT_ENCODER
     if ((hTp->transportFmt == TT_MP4_ADTS) &&
         !hTp->writer.adts.protection_absent) {
       adtsWrite_CrcEndReg(&hTp->writer.adts, &hTp->bitStream, crcIndex);
     }
     hTp->pceFrameCounter = 0; /* reset pce frame counter */
+#endif
   }
 
   if (hTp->pceFrameCounter != -1) {
@@ -470,6 +483,7 @@ TRANSPORTENC_ERROR transportEnc_WriteAccessUnit(HANDLE_TRANSPORTENC hTp,
 TRANSPORTENC_ERROR transportEnc_EndAccessUnit(HANDLE_TRANSPORTENC hTp,
                                               int *bits) {
   switch (hTp->transportFmt) {
+#ifndef DISABLE_TRANSPORT_ENCODER
     case TT_MP4_LATM_MCP0:
     case TT_MP4_LATM_MCP1:
     case TT_MP4_LOAS:
@@ -483,6 +497,7 @@ TRANSPORTENC_ERROR transportEnc_EndAccessUnit(HANDLE_TRANSPORTENC hTp,
       *bits -= adifWrite_GetHeaderBits(&hTp->writer.adif);
       hTp->writer.adif.headerWritten = 1;
       break;
+#endif
     case TT_MP4_RAW:
       *bits -= hTp->writer.raw.prevBits;
       break;
@@ -499,6 +514,7 @@ TRANSPORTENC_ERROR transportEnc_GetFrame(HANDLE_TRANSPORTENC hTpEnc,
   HANDLE_FDK_BITSTREAM hBs = &hTpEnc->bitStream;
 
   switch (hTpEnc->transportFmt) {
+#ifndef DISABLE_TRANSPORT_ENCODER
     case TT_MP4_LATM_MCP0:
     case TT_MP4_LATM_MCP1:
     case TT_MP4_LOAS:
@@ -518,6 +534,7 @@ TRANSPORTENC_ERROR transportEnc_GetFrame(HANDLE_TRANSPORTENC hTpEnc,
       FDK_ASSERT((INT)FDKgetValidBits(hBs) >= 0);
       *nbytes = (FDKgetValidBits(hBs) + 7) >> 3;
       break;
+#endif
     case TT_MP4_RAW:
       FDKsyncCache(hBs);
       hTpEnc->writer.raw.curSubFrame++;
@@ -544,10 +561,13 @@ INT transportEnc_GetStaticBits(HANDLE_TRANSPORTENC hTp, int auBits) {
   }
 
   switch (hTp->transportFmt) {
+#ifndef DISABLE_TRANSPORT_ENCODER
     case TT_MP4_ADIF:
+#endif
     case TT_MP4_RAW:
       nbits = 0; /* Do not consider the ADIF header into the total bitrate */
       break;
+#ifndef DISABLE_TRANSPORT_ENCODER
     case TT_MP4_ADTS:
       nbits = adtsWrite_GetHeaderBits(&hTp->writer.adts);
       break;
@@ -557,6 +577,7 @@ INT transportEnc_GetStaticBits(HANDLE_TRANSPORTENC hTp, int auBits) {
       nbits =
           transportEnc_LatmCountTotalBitDemandHeader(&hTp->writer.latm, auBits);
       break;
+#endif
     default:
       nbits = 0;
       break;
@@ -579,7 +600,7 @@ void transportEnc_Close(HANDLE_TRANSPORTENC *phTp) {
 
 int transportEnc_CrcStartReg(HANDLE_TRANSPORTENC hTpEnc, int mBits) {
   int crcReg = 0;
-
+#ifndef DISABLE_TRANSPORT_ENCODER
   switch (hTpEnc->transportFmt) {
     case TT_MP4_ADTS:
       crcReg = adtsWrite_CrcStartReg(&hTpEnc->writer.adts, &hTpEnc->bitStream,
@@ -588,11 +609,13 @@ int transportEnc_CrcStartReg(HANDLE_TRANSPORTENC hTpEnc, int mBits) {
     default:
       break;
   }
+#endif
 
   return crcReg;
 }
 
 void transportEnc_CrcEndReg(HANDLE_TRANSPORTENC hTpEnc, int reg) {
+#ifndef DISABLE_TRANSPORT_ENCODER
   switch (hTpEnc->transportFmt) {
     case TT_MP4_ADTS:
       adtsWrite_CrcEndReg(&hTpEnc->writer.adts, &hTpEnc->bitStream, reg);
@@ -600,6 +623,7 @@ void transportEnc_CrcEndReg(HANDLE_TRANSPORTENC hTpEnc, int reg) {
     default:
       break;
   }
+#endif
 }
 
 TRANSPORTENC_ERROR transportEnc_GetConf(HANDLE_TRANSPORTENC hTpEnc,
@@ -613,6 +637,7 @@ TRANSPORTENC_ERROR transportEnc_GetConf(HANDLE_TRANSPORTENC hTpEnc,
 
   /* write StreamMuxConfig or AudioSpecificConfig depending on format used */
   switch (hTpEnc->transportFmt) {
+#ifndef DISABLE_TRANSPORT_ENCODER
     case TT_MP4_LATM_MCP0:
     case TT_MP4_LATM_MCP1:
     case TT_MP4_LOAS:
@@ -620,6 +645,7 @@ TRANSPORTENC_ERROR transportEnc_GetConf(HANDLE_TRANSPORTENC hTpEnc,
           CreateStreamMuxConfig(hLatmConfig, dataBuffer, 0, &hTpEnc->callbacks);
       *confType = 1; /* config is SMC */
       break;
+#endif
     default:
       if (transportEnc_writeASC(dataBuffer, cc, &hTpEnc->callbacks) != 0) {
         tpErr = TRANSPORTENC_UNKOWN_ERROR;

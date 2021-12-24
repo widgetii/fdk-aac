@@ -1409,7 +1409,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
   /*
    * Initialize Transport - Module.
    */
-#ifndef DISABLE_TRANSPORT_ENCODER
   if ((InitFlags & AACENC_INIT_TRANSPORT)) {
     UINT flags = 0;
 
@@ -1435,7 +1434,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
     }
 
   } /* transport initialization */
-#endif
 
   /*
    * Initialize AAC - Core.
@@ -1652,7 +1650,6 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
   } /* (hAacEncoder->encoder_modis&ENC_MODE_FLAG_SAC) */
 #endif
 
-#ifndef DISABLE_TRANSPORT_ENCODER
   /* Open Transport Encoder */
   if (transportEnc_Open(&hAacEncoder->hTpEnc) != 0) {
     err = AACENC_MEMORY_ERROR;
@@ -1671,7 +1668,7 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
 
     C_ALLOC_SCRATCH_END(_pLibInfo, LIB_INFO, FDK_MODULE_LAST)
   }
-#endif
+
 #ifndef DISABLE_SBR_ENCODER
   if (transportEnc_RegisterSbrCallback(hAacEncoder->hTpEnc, aacenc_SbrCallback,
                                        hAacEncoder) != 0) {
@@ -1741,9 +1738,7 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder) {
       FDKaacEnc_Close(&hAacEncoder->hAacEnc);
     }
 
-#ifndef DISABLE_TRANSPORT_ENCODER
     transportEnc_Close(&hAacEncoder->hTpEnc);
-#endif
 
 #ifndef DISABLE_META_ENCODER
     if (hAacEncoder->hMetadataEnc) {
