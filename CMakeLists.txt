@@ -172,11 +172,16 @@ if(NOT DISABLE_NOISE_SHAPING)
     libAACenc/src/aacenc_tns.h
     libAACenc/src/pnsparam.cpp
     libAACenc/src/pnsparam.h
+    libAACenc/src/noisedet.cpp
+    libAACenc/src/noisedet.h
+    libAACenc/src/pns_func.h
     )
 if(NOT DISABLE_STEREO)
   set(STEREO_SRC
     libAACenc/src/ms_stereo.cpp
     libAACenc/src/ms_stereo.h
+    libAACenc/src/intensity.cpp
+    libAACenc/src/intensity.h
     )
 endif()
 endif()
@@ -199,9 +204,7 @@ set(AACENC_SRC
   libAACenc/src/chaosmeasure.cpp
   libAACenc/src/dyn_bits.cpp
   libAACenc/src/grp_data.cpp
-  libAACenc/src/intensity.cpp
   libAACenc/src/line_pe.cpp
-  libAACenc/src/noisedet.cpp
   libAACenc/src/pre_echo_control.cpp
   libAACenc/src/psy_configuration.cpp
   libAACenc/src/psy_main.cpp
@@ -225,11 +228,8 @@ set(AACENC_SRC
   libAACenc/src/chaosmeasure.h
   libAACenc/src/dyn_bits.h
   libAACenc/src/grp_data.h
-  libAACenc/src/intensity.h
   libAACenc/src/interface.h
   libAACenc/src/line_pe.h
-  libAACenc/src/noisedet.h
-  libAACenc/src/pns_func.h
   libAACenc/src/pre_echo_control.h
   libAACenc/src/psy_configuration.h
   libAACenc/src/psy_const.h
