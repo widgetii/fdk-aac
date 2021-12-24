@@ -378,6 +378,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(
     }
   }
 
+#ifndef DISABLE_PNS
   ErrorStatus = FDKaacEnc_InitPnsConfiguration(
       &hPsy->psyConf[0].pnsConf, bitRate / channelsEff, sampleRate, usePns,
       hPsy->psyConf[0].sfbCnt, hPsy->psyConf[0].sfbOffset,
@@ -391,6 +392,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(
         cm->elInfo[1].nChannelsInEl, (hPsy->psyConf[1].filterbank == FB_LC));
     if (ErrorStatus != AAC_ENC_OK) return ErrorStatus;
   }
+#endif
 
   return ErrorStatus;
 }
@@ -1141,6 +1143,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
     INT win = (isShortWindow[ch] ? 1 : 0);
     if (!psyStatic[ch]->isLFE) {
       /* PNS Decision */
+#ifndef DISABLE_PNS
       FDKaacEnc_PnsDetect(
           &(psyConf[0].pnsConf), pnsData[ch],
           psyStatic[ch]->blockSwitchingControl.lastWindowSequence,
@@ -1152,6 +1155,12 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           tnsData[ch]->dataRaw.Long.subBlockInfo.predictionGain[HIFILT],
           tnsData[ch]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT],
           psyOutChannel[ch]->sfbEnergyLdData, psyOutChannel[ch]->noiseNrg);
+#else
+      FDKmemclear(pnsData[ch]->pnsFlag, sizeof(pnsData[ch]->pnsFlag));
+      for (sfb = 0; sfb < MAX_GROUPED_SFB; sfb++) {
+          psyOutChannel[ch]->noiseNrg[sfb] = NO_NOISE_PNS;
+      }
+#endif
     } /* !isLFE */
   }   /* ch */
 
@@ -1166,6 +1175,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           fixMax(maxSfbPerGroup[0], maxSfbPerGroup[1]);
     if (psyStatic[0]->blockSwitchingControl.lastWindowSequence !=
         SHORT_WINDOW) {
+#ifndef DISABLE_PNS
       /* PNS preprocessing depending on ms processing: PNS not in Short Window!
        */
       FDKaacEnc_PreProcessPnsChannelPair(
@@ -1173,6 +1183,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           (&psyData[1]->sfbEnergy)->Long, psyOutChannel[0]->sfbEnergyLdData,
           psyOutChannel[1]->sfbEnergyLdData, psyData[0]->sfbEnergyMS.Long,
           &(psyConf[0].pnsConf), pnsData[0], pnsData[1]);
+#endif
 
       FDKaacEnc_IntensityStereoProcessing(
           psyData[0]->sfbEnergy.Long, psyData[1]->sfbEnergy.Long,
@@ -1193,10 +1204,12 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           psyConf[0].allowMS, psyData[0]->sfbActive, psyData[0]->sfbActive,
           maxSfbPerGroup[0], psyOutChannel[0]->sfbOffsets);
 
+#ifndef DISABLE_PNS
       /* PNS postprocessing */
       FDKaacEnc_PostProcessPnsChannelPair(
           psyData[0]->sfbActive, &(psyConf[0].pnsConf), pnsData[0], pnsData[1],
           psyOutElement->toolsInfo.msMask, &psyOutElement->toolsInfo.msDigest);
+#endif
 
     } else {
       FDKaacEnc_IntensityStereoProcessing(
@@ -1226,6 +1239,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
     }
   } /* (channels == 2) */
 
+#ifndef DISABLE_PNS
   /*
     PNS Coding
   */
@@ -1244,6 +1258,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           psyOutChannel[ch]->sfbThresholdLdData);
     }
   }
+#endif
 
   /*
       build output

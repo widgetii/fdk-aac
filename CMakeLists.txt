@@ -68,8 +68,11 @@ option(FDK_AAC_INSTALL_PKGCONFIG_MODULE "Install pkg-config .pc file" ON)
 option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
 option(DISABLE_SAC_ENCODER "Turn off MPEG Surround encoder support" OFF)
 option(DISABLE_META_ENCODER "Turn off metadata encoder support" OFF)
-option(DISABLE_TRANSPORT_ENCODER "Turn off transport encoder support" OFF)
+option(DISABLE_PNS "Turn off perceptual noise substitution" OFF)
 option(DISABLE_DECODERS "Turn off all decoders" OFF)
+
+# TODO: remove
+option(DISABLE_TRANSPORT_ENCODER "Turn off transport encoder support" OFF)
 
 # Checks
 
@@ -162,14 +165,20 @@ if(NOT DISABLE_META_ENCODER)
     libAACenc/src/metadata_compressor.h
     )
 endif()
+if(NOT DISABLE_PNS)
+  set(PNSENC_SRC
+    libAACenc/src/aacenc_pns.cpp
+    libAACenc/src/aacenc_pns.h
+    )
+endif()
 set(AACENC_SRC
   ${META_SRC}
   ${MPS_SRC}
+  ${PNS_SRC}
   libAACenc/src/aacEnc_ram.cpp
   libAACenc/src/aacEnc_rom.cpp
   libAACenc/src/aacenc.cpp
   libAACenc/src/aacenc_lib.cpp
-  libAACenc/src/aacenc_pns.cpp
   libAACenc/src/aacenc_tns.cpp
   libAACenc/src/adj_thr.cpp
   libAACenc/src/band_nrg.cpp
@@ -196,7 +205,6 @@ set(AACENC_SRC
   libAACenc/src/tonality.cpp
   libAACenc/src/transform.cpp
   libAACenc/src/aacenc.h
-  libAACenc/src/aacenc_pns.h
   libAACenc/src/aacEnc_ram.h
   libAACenc/src/aacEnc_rom.h
   libAACenc/src/aacenc_tns.h
@@ -536,6 +544,9 @@ if(DISABLE_META_ENCODER)
 endif()
 if(DISABLE_TRANSPORT_ENCODER)
   target_compile_definitions(fdk-aac PRIVATE DISABLE_TRANSPORT_ENCODER)
+endif()
+if(DISABLE_PNS)
+  target_compile_definitions(fdk-aac PRIVATE DISABLE_PNS)
 endif()
 
 ### Some compiler options from Makefile.am
