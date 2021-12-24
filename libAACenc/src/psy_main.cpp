@@ -1164,6 +1164,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
     } /* !isLFE */
   }   /* ch */
 
+#ifndef DISABLE_STEREO
   /*
       stereo Processing
   */
@@ -1238,6 +1239,7 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT channels, PSY_ELEMENT *psyElement,
           psyOutChannel[0]->sfbOffsets);
     }
   } /* (channels == 2) */
+#endif
 
 #ifndef DISABLE_PNS
   /*

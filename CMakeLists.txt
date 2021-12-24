@@ -69,6 +69,7 @@ option(DISABLE_SBR_ENCODER "Turn off SBR encoder support" OFF)
 option(DISABLE_SAC_ENCODER "Turn off MPEG Surround encoder support" OFF)
 option(DISABLE_META_ENCODER "Turn off metadata encoder support" OFF)
 option(DISABLE_PNS "Turn off perceptual noise substitution" OFF)
+option(DISABLE_STEREO "Turn off stereo processing" OFF)
 option(DISABLE_DECODERS "Turn off all decoders" OFF)
 
 # TODO: remove
@@ -170,11 +171,18 @@ if(NOT DISABLE_PNS)
     libAACenc/src/aacenc_pns.cpp
     libAACenc/src/aacenc_pns.h
     )
+if(NOT DISABLE_STEREO)
+  set(STEREO_SRC
+    libAACenc/src/ms_stereo.cpp
+    libAACenc/src/ms_stereo.h
+    )
+endif()
 endif()
 set(AACENC_SRC
   ${META_SRC}
   ${MPS_SRC}
   ${PNS_SRC}
+  ${STEREO_SRC}
   libAACenc/src/aacEnc_ram.cpp
   libAACenc/src/aacEnc_rom.cpp
   libAACenc/src/aacenc.cpp
@@ -192,7 +200,6 @@ set(AACENC_SRC
   libAACenc/src/grp_data.cpp
   libAACenc/src/intensity.cpp
   libAACenc/src/line_pe.cpp
-  libAACenc/src/ms_stereo.cpp
   libAACenc/src/noisedet.cpp
   libAACenc/src/pnsparam.cpp
   libAACenc/src/pre_echo_control.cpp
@@ -222,7 +229,6 @@ set(AACENC_SRC
   libAACenc/src/intensity.h
   libAACenc/src/interface.h
   libAACenc/src/line_pe.h
-  libAACenc/src/ms_stereo.h
   libAACenc/src/noisedet.h
   libAACenc/src/pns_func.h
   libAACenc/src/pnsparam.h
@@ -547,6 +553,9 @@ if(DISABLE_TRANSPORT_ENCODER)
 endif()
 if(DISABLE_PNS)
   target_compile_definitions(fdk-aac PRIVATE DISABLE_PNS)
+endif()
+if(DISABLE_STEREO)
+  target_compile_definitions(fdk-aac PRIVATE DISABLE_STEREO)
 endif()
 
 ### Some compiler options from Makefile.am
